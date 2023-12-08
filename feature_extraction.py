@@ -1,3 +1,7 @@
+'''
+This file takes the chromagraph data as input and creates our custom harmonic and melodic features
+'''
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal

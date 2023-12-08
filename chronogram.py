@@ -1,12 +1,12 @@
+'''
+This file takes a wav file and converts it into a chromagraph
+'''
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
 from scipy.io import wavfile
 from os import listdir
-from os.path import isfile
-from typing import Any
-import multiprocessing as mp
-from multiprocessing import SimpleQueue
+
 import json as js
 
 
