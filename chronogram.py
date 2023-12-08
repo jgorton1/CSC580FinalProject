@@ -27,7 +27,7 @@ def getChroma(filename: str):
     '''
     Simple conversion code for going from spectrogram of frequencies 
     '''
-    sample_rate, samples = wavfile.read('Data\\train\\classical\\classical.00072.wav')
+    sample_rate, samples = wavfile.read(filename)
     frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, nperseg=4400, noverlap=0)
 
     octaveCount: int = 1
@@ -126,8 +126,7 @@ def __main__():
         data["train"][name] = {}
         for filename in files:
             num: int = int(filename.split(".")[1])
-            
-            temp = getChroma(train + name + filename)
+            temp = getChroma(train + name + "\\" + filename)
             data["train"][name][num] = temp
     
     data["test"] = {}
@@ -137,7 +136,7 @@ def __main__():
         for filename in files:
             num: int = int(filename.split(".")[1])
             
-            temp = getChroma(test + name + filename)
+            temp = getChroma(test + name + "\\" + filename)
             data["test"][name][num] = temp
 
     cgfile = open(".\\Data\\chronogram.json", "w")

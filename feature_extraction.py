@@ -34,14 +34,20 @@ for x in cgdata:
     
 
 def main():
-
+    
     train_file = open(".\\Data\\train_features.csv", "w");
     test_file = open(".\\Data\\test_features.csv", "w");
     write_labels(train_file)
     write_labels(test_file)
     
+    
     cgfile = open(".\\Data\\chronogram.json")
+    
+
     cgdata = js.load(cgfile)
+    #print(cgdata['train']['blues']['0'][0])
+    #print(cgdata['train']['classical']['0'][0])
+    
     for x in cgdata:
         for y in cgdata[x]:
             for z in cgdata[x][y]:
@@ -51,22 +57,26 @@ def main():
                 # there are 10 partitions in song features
                 counter = 0
                 for partition in song_features:
+                    if(len(song_features) != 10):
+                        print(x, y, z)
+                    
                     cleaned_up = clean_up(partition)
                     if(x == "train"):
                         write_data(cleaned_up, train_file, y, z, counter)
                     else:
                         write_data(cleaned_up, test_file, y, z, counter)
                     counter += 1
+                    
     
 
 def write_labels(file: TextIOWrapper):
  # labels
     harmonies: dict[tuple[int, int], float] = {}
     melodies: dict[int, float] = {}
-    for x in range(1, 11):
-        for y in range(1, 12 - x):
+    for x in range(1, 7):
+        for y in range(1, 7 - x // 6):
             harmonies[(x, y)] = 0
-    for x in range(0, 12):
+    for x in range(0, 7):
         melodies[x] = 0
 
     file.write(f"Title")
@@ -124,6 +134,8 @@ def get_harmonic_vals(arr: list[tuple[int, float]]):
     chord.sort(key=lambda x : x[0])
     first = abs(chord[0][0] - chord[1][0])
     second = abs(chord[1][0] - chord[2][0])
+    first = min(first, 12 - first)
+    second = min(second, 12 - second)
     return [first, second]
 
 '''
@@ -150,6 +162,7 @@ def get_melodic_vals(prev: list[tuple[int, float]], cur: list[tuple[int, float]]
             intensityCur = y[1]
             pitchCur = y[0]
             step = abs(pitchCur - pitchPrev)
+            step = min(step, 12 - step)
             score = (intensityPrev + intensityCur) / ampTotal
             if(step in res):
                 res[step] += score
@@ -165,10 +178,10 @@ def clean_up(partition: list[tuple[list[int], dict[int, float] | None]]):
     # set up all possible features, 55 combinations (similar for melodic, but just 12)
     harmony_dict: dict[tuple[int, int], float] = {}
     melody_dict: dict[int, float] = {}
-    for x in range(1, 11):
-        for y in range(1, 12 - x):
+    for x in range(1, 7):
+        for y in range(1, 7 - (x // 6)):
             harmony_dict[(x, y)] = 0
-    for x in range(0, 12):
+    for x in range(0, 7):
         melody_dict[x] = 0
     
     for x in harmonies:
