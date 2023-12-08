@@ -89,10 +89,6 @@ def main():
     correct = accuracy_score(output, test_label)
     print(correct)
 
-    
-    
-
-        
 
 def get_data_from_line(text_line: str):
     line = text_line.strip().split(",")
