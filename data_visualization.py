@@ -2,8 +2,6 @@
 This is a messy file that was used for quick testing of different models on a simple validation set
 I also used it to make visuals of the data.
 PCA was shown unhelpful, and my features alone only resulted in 20% accuracy. Combining with the csv features generated from Librosa seems promising
-
-
 '''
 import numpy as np
 from io import TextIOWrapper
@@ -47,7 +45,8 @@ def main():
         melody, harmony, label, number, partition = get_data_from_line(x)
         melody = [float(val) for val in melody]
         harmony = [float(val) for val in harmony]
-
+        melody = collapse_melody(melody)
+        harmony = collapse_harmony(harmony)
         #if(label in classes):
         #    temp_m, temp_h = classes[label] 
         #    classes[label] = (list(map(add, temp_m, melody)), list(map(add, temp_h, harmony)))
@@ -57,7 +56,8 @@ def main():
         #    class_counter[label] = 1
         
         if((label, number, partition) in csv_dict):
-            features = csv_dict[(label, number, partition)][:50] + melody #+ harmony comparable to having just harmony (more separable data)
+            #features = csv_dict[(label, number, partition)][:70] + melody + harmony #comparable to having just harmony (more separable data)
+            features = melody + harmony
             train_label.append(label)
             train_data.append(features)
         else:
@@ -70,12 +70,13 @@ def main():
         melody, harmony, label, number, partition = get_data_from_line(x)
         melody = [float(val) for val in melody]
         harmony = [float(val) for val in harmony]
-
-        features = harmony
+        melody = collapse_melody(melody)
+        harmony = collapse_harmony(harmony)
 
         if((label, number, partition) in csv_dict):
             test_label.append(label)
-            test_data.append(csv_dict[(label, number, partition)][:50] + melody)
+            #test_data.append(csv_dict[(label, number, partition)][:70] + melody + harmony)
+            test_data.append(melody + harmony)
 
     for x in classes.keys():
         temp_m, temp_h = classes[x]
@@ -93,12 +94,12 @@ def main():
     test_data = scaler.fit_transform(test_data)
 
     outputs = []
-    for x in range(1, 5):
+    for x in range(1, 50):
         knn = KNeighborsClassifier(n_neighbors=x)
-        knn.fit(train_data, train_label)
-        output = knn.predict(test_data)
+        knn.fit(x_train, y_train)
+        output = knn.predict(x_valid)
 
-        correct = accuracy_score(output, test_label)
+        correct = accuracy_score(output, y_valid)
         print(x, correct)
     
     #numbering = {"blues": 0, "classical": 1, "country": 2, "disco": 3, "hiphop": 4, "jazz": 5, "metal":6, "pop": 7, "reggae": 8, "rock":9}
@@ -137,7 +138,26 @@ def main():
         counter += 1
     plt.show()
     '''
-    
+
+def collapse_melody(melodies: list[float]):
+    sum = 0
+    key = {0: 1, 1: .5, 2: 0, 3: .25, 4: .5 ,5:3, 6: -3 }
+    for x in range(0, 7):
+        sum += melodies[x] * key[x]
+    return [sum]
+
+def collapse_harmony(harmonies: list[float]):
+    sum = 0
+    key = {0: 1, 1: .5, 2: 0, 3: .25, 4: .5 ,5:3, 6: -3 }
+    counter = 0
+    for x in range(1, 7):
+        for y in range(1, 7 - x // 6):
+            sum += (harmonies[counter] * key[x]) + (harmonies[counter] * key[y])
+            counter += 1
+    return [sum]
+
+
+
 def attempt_nn(training_data: list[list[float]], training_labels: list[int]):
     x1, y1, x2, y2 = get_validation(training_data, training_labels)
     clf = MLPClassifier(solver='lbfgs', alpha=1e-3, hidden_layer_sizes=(10,), random_state=1, max_iter=10000)

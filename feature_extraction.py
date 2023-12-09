@@ -37,12 +37,18 @@ for x in cgdata:
 
     
 
-def main():
+def main(mode: int = 1):
     
-    train_file = open(".\\Data\\train_features.csv", "w");
-    test_file = open(".\\Data\\test_features.csv", "w");
-    write_labels(train_file)
-    write_labels(test_file)
+    if(mode == 1):
+        train_file = open(".\\Data\\train_features.csv", "w");
+        test_file = open(".\\Data\\test_features.csv", "w");
+        write_labels(train_file)
+        write_labels(test_file)
+    else:
+        train_file = open(".\\Data\\mh_train.csv", "w");
+        test_file = open(".\\Data\\mh_test.csv", "w");
+        train_file.write("filename,melodic,harmonic,label\n")
+        test_file.write("filename,melodic,harmonic,label\n")
     
     
     cgfile = open(".\\Data\\chronogram.json")
@@ -66,9 +72,16 @@ def main():
                     
                     cleaned_up = clean_up(partition)
                     if(x == "train"):
-                        write_data(cleaned_up, train_file, y, z, counter)
+                        if(mode == 1):
+                            write_data(cleaned_up, train_file, y, z, counter)
+                        else:
+                            write_mh(cleaned_up, train_file, y, z, counter)
+                        
                     else:
-                        write_data(cleaned_up, test_file, y, z, counter)
+                        if(mode == 1):
+                            write_data(cleaned_up, test_file, y, z, counter)
+                        else:
+                            write_mh(cleaned_up, test_file, y, z, counter)
                     counter += 1
                     
     
@@ -98,6 +111,16 @@ def write_data(data: tuple[dict[tuple[int, int], float], dict[int, float]] ,file
         file.write("," + str(harmonies[x]))
     for y in sorted(melodies.keys()):
         file.write("," + str(melodies[y]))
+    file.write(f",{name}\n")
+
+def write_mh(data: tuple[dict[tuple[int, int], float], dict[int, float]] ,file: TextIOWrapper, name: str, num: str, part: int):
+    harmonies: dict[tuple[int, int], float] = data[0]
+    harmony = [harmonies[x] for x in sorted(harmonies.keys())]
+    melodies: dict[int, float] = data[1]
+    melody = [melodies[x] for x in sorted(melodies.keys())]
+    file.write(f"{name}.{num}.{part}")
+    file.write("," + str(collapse_melody(melody)))
+    file.write("," + str(collapse_harmony(harmony)))
     file.write(f",{name}\n")
 
 
@@ -199,9 +222,25 @@ def clean_up(partition: list[tuple[list[int], dict[int, float] | None]]):
     
     return harmony_dict, melody_dict
 
+def collapse_melody(melodies: list[float]):
+    sum = 0
+    key = {0: 1, 1: .5, 2: 0, 3: .25, 4: .5 ,5:3, 6: -3 }
+    for x in range(0, 7):
+        sum += melodies[x] * key[x]
+    return sum
+
+def collapse_harmony(harmonies: list[float]):
+    sum = 0
+    key = {0: 1, 1: .5, 2: 0, 3: .25, 4: .5 ,5:3, 6: -3 }
+    counter = 0
+    for x in range(1, 7):
+        for y in range(1, 7 - x // 6):
+            sum += (harmonies[counter] * key[x]) + (harmonies[counter] * key[y])
+            counter += 1
+    return sum
 
     
     
 
 
-main()
+main(mode=2)
